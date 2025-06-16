@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>oEmbed Viewer</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div style="
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60px;
+  background-color: #1b1f2a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  color: white;
+  font-family: 'Segoe UI', sans-serif;
+  font-size: 16px;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+">
+  <div id="userInfo">
+    Welcome, <span id="userName" style="font-weight: 600;">User</span>
+  </div>
+
+  <button onclick="logout()" style="
+    padding: 6px 16px;
+    background-color: #d9534f;
+    border: none;
+    border-radius: 5px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color 0.3s ease;
+  " onmouseover="this.style.backgroundColor='#c9302c'" onmouseout="this.style.backgroundColor='#d9534f'">
+    Logout
+  </button>
+</div>
+
+
+
+  <div class="container">
+    <div class="form-container">
+      <form class="form" id="linkForm" onsubmit="handleLink(event)">
+        <h2>Paste a Public Link</h2>
+        <input type="url" id="oembedUrl" placeholder="Paste Instagram, Facebook, Twitter, or YouTube link" required>
+        <button type="submit">Preview</button>
+      </form>
+      <div id="preview" style="margin-top: 20px;"></div>
+    </div>
+  </div>
+
+  <script>
+  // Show user's name
+  window.onload = () => {
+  const name = localStorage.getItem('name');
+  const nameElement = document.getElementById('userName');
+
+  if (nameElement && name) {
+    nameElement.innerText = name;
+  } else {
+    nameElement.innerText = "Guest";
+  }
+};
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('name');
+    window.location.href = '/logout';
+}
+</script>
+
+<script>
+  function handleLink(e) {
+    e.preventDefault();
+    const input = document.getElementById('oembedUrl');
+    const preview = document.getElementById('preview');
+    preview.innerHTML = ''; // Clear previous preview
+
+    let url = input.value.trim();
+
+    // ✅ Convert x.com to twitter.com
+    if (url.includes('x.com')) {
+      url = url.replace('x.com', 'twitter.com');
+    }
+
+    if (url.includes('twitter.com')) {
+      preview.innerHTML = `
+        <blockquote class="twitter-tweet">
+          <a href="${url}"></a>
+        </blockquote>`;
+        
+      // Load Twitter embed script
+      if (typeof twttr !== 'undefined' && twttr.widgets) {
+        twttr.widgets.load(preview);
+      } else {
+        const script = document.createElement('script');
+        script.src = 'https://platform.twitter.com/widgets.js';
+        script.async = true;
+        script.onload = () => twttr.widgets.load(preview);
+        document.body.appendChild(script);
+      }
+
+    } else if (url.includes('youtube.com') || url.includes('youtu.be')) {
+      const embedUrl = url.includes('watch?v=') ?
+        url.replace('watch?v=', 'embed/') :
+        `https://www.youtube.com/embed/${url.split('/').pop()}`;
+        
+      preview.innerHTML = `<iframe src="${embedUrl}" allowfullscreen></iframe>`;
+
+    } else {
+      preview.innerHTML = '<p style="color:red;">Only YouTube and Twitter/X links are supported.</p>';
+    }
+  }
+</script>
+
+
+</body>
+</html>
